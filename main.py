@@ -114,7 +114,15 @@ def load_history(path):
             if rank_map:
                 rows.append((t, rank_map))
     rows.sort(key=lambda item: item[0])
-    return rows
+    # The recorder retries a failed read within the hour, so one timestamp can
+    # appear twice; keep only the last (freshest) row per timestamp.
+    deduped = []
+    for item in rows:
+        if deduped and deduped[-1][0] == item[0]:
+            deduped[-1] = item
+        else:
+            deduped.append(item)
+    return deduped
 
 
 def load_created(path, rows):
